@@ -1,0 +1,17 @@
+resources/
+.env
+.vscode
+__pycache__
+logs/
+wandb/
+models/
+.idea/
+.DS_Store
+checkpoints/
+
+!src/models
+!tests/models
+
+.cache
+
+tmp/

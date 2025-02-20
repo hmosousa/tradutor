@@ -1,0 +1,77 @@
+# tune run --nnodes 1 --nproc_per_node 4 recipes/lora_finetune_distributed.py --config configs/lora/llama3.yaml
+
+output_dir: /tmp/llama3
+model_dir: models/hf_llama3_fft
+clean: True
+split: train
+packed: False
+batch_size: 4
+gradient_accumulation_steps: 16
+epochs: 1
+lr: 1e-6
+checkpoint_dir: checkpoints/llama3_fft
+
+# Tokenizer
+tokenizer:
+  _component_: torchtune.models.llama3.llama3_tokenizer
+  path: ${model_dir}/tokenizer.model
+
+# Dataset
+dataset:
+  _component_: src.data.tune.ptradutor_dataset
+  train_on_input: True
+  max_seq_len: 1024
+  split: ${split}
+  clean: ${clean}
+  packed: ${packed}
+seed: 42
+shuffle: True
+
+# Model Arguments
+model:
+  _component_: torchtune.models.llama3.llama3_8b
+
+checkpointer:
+  _component_: torchtune.utils.FullModelHFCheckpointer
+  checkpoint_dir: ${model_dir}
+  checkpoint_files: [
+    model-00001-of-00007.safetensors,
+    model-00002-of-00007.safetensors,
+    model-00003-of-00007.safetensors,
+    model-00004-of-00007.safetensors,
+    model-00005-of-00007.safetensors,
+    model-00006-of-00007.safetensors,
+    model-00007-of-00007.safetensors,
+  ]
+  recipe_checkpoint: null
+  output_dir: ${checkpoint_dir}
+  model_type: LLAMA3
+resume_from_checkpoint: False
+
+# Fine-tuning arguments
+optimizer:
+  _component_: torch.optim.AdamW
+  lr: ${lr}
+  foreach: False
+
+loss:
+  _component_: torch.nn.CrossEntropyLoss
+max_steps_per_epoch: null
+
+
+# Training env
+device: cuda
+
+# Memory management
+enable_activation_checkpointing: True
+memory_efficient_fsdp_wrap: True
+
+# Reduced precision
+dtype: bf16
+
+# Logging
+metric_logger:
+  _component_: torchtune.utils.metric_logging.WandBLogger
+  project: tradutor
+log_every_n_steps: 1
+log_peak_memory_stats: False

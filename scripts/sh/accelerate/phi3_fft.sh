@@ -1,0 +1,38 @@
+export OMP_NUM_THREADS=$(nproc)
+
+accelerate launch scripts/clm.py \
+    --model_name_or_path microsoft/Phi-3-mini-4k-instruct \
+    --tokenizer_name microsoft/Phi-3-mini-4k-instruct \
+    --dataset_name u1537782/PTradutor \
+    --dataset_config_name clean \
+    --validation_split_percentage 1 \
+    --max_train_samples 1000 \
+    --max_eval_samples 100 \
+    --do_train \
+    --do_eval \
+    --eval_strategy steps \
+    --output_dir checkpoints/hf_phi3_fft \
+    --num_train_epochs 1 \
+    --eval_steps 5000 \
+    --per_device_train_batch_size 1 \
+    --per_device_eval_batch_size 1 \
+    --use_fast_tokenizer True \
+    --warmup_steps 1000 \
+    --save_total_limit 1 \
+    --save_steps 5000 \
+    --logging_steps 1 \
+    --save_strategy steps \
+    --load_best_model_at_end True \
+    --block_size 1024 \
+    --report_to wandb \
+    --weight_decay 0.01 \
+    --lr_scheduler_type "cosine" \
+    --learning_rate 2e-5 \
+    --seed 42 \
+    --data_seed 42 \
+    --push_to_hub \
+    --hub_private_repo \
+    --run_name "hf_phi3_fft" \
+    --gradient_accumulation_steps 16 \
+    --torch_dtype "auto" \
+    --preprocessing_num_workers 48

@@ -1,0 +1,81 @@
+# tune run --nproc_per_node 4 recipes/lora_finetune_distributed.py --config configs/lora/phi3.yaml 
+
+output_dir: /tmp/phi3
+model_dir: models/Phi-3-mini-4k-instruct
+clean: True
+split: train[:1000000]
+batch_size: 4
+gradient_accumulation_steps: 16
+epochs: 1
+lr: 2e-5
+checkpoint_dir: checkpoints/phi3_lora
+
+tokenizer:
+  _component_: torchtune.models.phi3.phi3_mini_tokenizer
+  path:  ${model_dir}/tokenizer.model
+
+# Model Arguments
+model:
+  _component_: torchtune.models.phi3.lora_phi3_mini
+  lora_attn_modules: ['q_proj', 'v_proj', 'k_proj', 'ouput_proj']
+  apply_lora_to_mlp: True
+  apply_lora_to_output: True
+  lora_rank: 128
+  lora_alpha: 256
+
+checkpointer:
+  _component_: torchtune.utils.FullModelHFCheckpointer
+  checkpoint_dir: ${model_dir}
+  checkpoint_files: [
+    model-00001-of-00002.safetensors,
+    model-00002-of-00002.safetensors
+  ]
+  recipe_checkpoint: null
+  output_dir: ${checkpoint_dir}
+  model_type: PHI3_MINI
+resume_from_checkpoint: False
+
+# Dataset and Sampler
+dataset:
+  _component_: src.data.tune.ptradutor_dataset
+  train_on_input: True
+  max_seq_len: 1024
+  split: ${split}
+  clean: ${clean}
+seed: 42
+shuffle: True
+
+# Optimizer and Scheduler
+optimizer:
+  _component_: torch.optim.AdamW
+  weight_decay: 0.01
+  lr: ${lr}
+lr_scheduler:
+  _component_: torchtune.modules.get_cosine_schedule_with_warmup
+  num_warmup_steps: 100
+
+loss:
+  _component_: torch.nn.CrossEntropyLoss
+
+# Training
+max_steps_per_epoch: null
+
+# Logging
+log_every_n_steps: 1
+
+metric_logger:
+  _component_: torchtune.utils.metric_logging.WandBLogger
+  project: tradutor
+
+# Environment
+device: cuda
+dtype: bf16
+enable_activation_checkpointing: False
+enable_fsdp: True
+
+# Show case the usage of pytorch profiler
+# Set enabled to False as it's only needed for debugging training
+profiler:
+  _component_: torchtune.utils.profiler
+  enabled: False
+  output_dir: ${output_dir}/torchtune_perf_tracing.json
