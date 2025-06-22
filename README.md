@@ -1,7 +1,4 @@
 # Tradutor
-
-[DEMO](http://35.208.194.219:8081)
-
 This repository contains the code and resources for training a model to translate text from English to European Portuguese.
 
 ## Overview
@@ -45,3 +42,22 @@ sh scripts/eval.sh
 ```
 
 This script contains all the necessary commands to evaluate the models.
+
+
+## Citation
+
+If you use this model in your work, please cite the following paper:
+```
+@article{Sousa2025,
+  author    = {Hugo Sousa and Satya Almasian and Ricardo Campos and Alipio Jorge},
+  title     = {Tradutor: Building a Variety Specific Translation Model},
+  journal   = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume    = {39},
+  number    = {24},
+  pages     = {25183--25191},
+  year      = {2025},
+  doi       = {10.1609/aaai.v39i24.34704},
+  issn      = {2374-3468},
+  month     = {April}
+}
+```
